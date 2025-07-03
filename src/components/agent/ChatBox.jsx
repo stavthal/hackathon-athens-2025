@@ -1,16 +1,49 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { LucideArrowUp, LucideBot, LucideUser } from "lucide-react";
+import {
+  LucideArrowUp,
+  LucideBot,
+  LucideUser,
+  LucideTrash2,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import ReactMarkdown from "react-markdown";
 
-export default function ChatBox() {
+export default function ChatBox({ user_input }) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
+  const [contextLoaded, setContextLoaded] = useState(false);
+  const messagesEndRef = useRef(null); // Load conversation from localStorage on component mount
+  useEffect(() => {
+    const savedConversation = localStorage.getItem("chatConversation");
+
+    if (savedConversation) {
+      try {
+        const parsedMessages = JSON.parse(savedConversation);
+        setMessages(parsedMessages);
+      } catch (error) {
+        console.error("Error loading saved conversation:", error);
+      }
+    }
+
+    // Reset context loaded state on component mount since context is fresh each time
+    setContextLoaded(false);
+  }, []);
+
+  // Save conversation to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("chatConversation", JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Reset context loaded state when user_input changes (fresh context each time)
+  useEffect(() => {
+    setContextLoaded(false);
+  }, [user_input]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -20,22 +53,69 @@ export default function ChatBox() {
     scrollToBottom();
   }, [messages]);
 
+  // Function to clear conversation history
+  const clearConversation = () => {
+    setMessages([]);
+    setContextLoaded(false);
+    localStorage.removeItem("chatConversation");
+  };
+
+  // Function to load context
+  const loadContext = () => {
+    if (user_input) {
+      console.log("Loading context:", user_input.substring(0, 100) + "...");
+      setContextLoaded(true);
+    } else {
+      console.log("No user_input provided");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+
+    // Check if this is the first message before updating state
+    const isFirstMessage = messages.length === 0;
+
+    // Add user message to local state immediately
+    const newUserMessage = { role: "user", content: userMessage };
+    setMessages((prev) => [...prev, newUserMessage]);
     setIsLoading(true);
 
     try {
+      // Prepare conversation history for API call
+      let conversationToSend = messages;
+
+      // If context is loaded, include it in the conversation history
+      if (contextLoaded && user_input) {
+        console.log("Adding context to conversation");
+        conversationToSend = [
+          {
+            role: "system",
+            content: `Here is the context document that should be referenced throughout this conversation:\n\n${user_input}`,
+          },
+          ...messages,
+        ];
+      } else {
+        console.log("Context not added:", {
+          contextLoaded,
+          hasUserInput: !!user_input,
+        });
+      }
+
+      // Send current conversation history along with the new message
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({
+          message: userMessage,
+          conversationHistory: conversationToSend, // Send the conversation history with context if applicable
+        }),
       });
 
       if (!response.ok) {
@@ -70,12 +150,56 @@ export default function ChatBox() {
 
   return (
     <div className="flex flex-col border rounded-lg shadow-md bg-white border-neutral-800 w-3/5 max-w-4xl mx-auto my-4 h-[800px]">
+      {/* Header with Load Context and Clear Button */}
+      <div className="flex justify-between items-center p-4 border-b">
+        <h3 className="text-lg font-semibold text-gray-700">AI Assistant</h3>
+        <div className="flex gap-2">
+          {!contextLoaded && user_input && (
+            <Button
+              onClick={loadContext}
+              variant="outline"
+              size="sm"
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            >
+              Load Context
+            </Button>
+          )}
+          {contextLoaded && (
+            <span className="text-sm text-green-600 font-medium px-2 py-1 bg-green-50 rounded">
+              Context Loaded
+            </span>
+          )}
+          {messages.length > 0 && (
+            <Button
+              onClick={clearConversation}
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LucideTrash2 className="w-4 h-4 mr-2" />
+              Clear Chat
+            </Button>
+          )}
+        </div>
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-gray-500 mt-8">
             <LucideBot className="mx-auto mb-2 w-8 h-8" />
             <p>Start a conversation with the AI agent!</p>
+            {user_input && !contextLoaded && (
+              <p className="text-sm mt-2 text-blue-600">
+                Click "Load Context" to include your document in the
+                conversation.
+              </p>
+            )}
+            {contextLoaded && (
+              <p className="text-sm mt-2 text-green-600">
+                Context document loaded and ready for reference.
+              </p>
+            )}
           </div>
         )}
 
