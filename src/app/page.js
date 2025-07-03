@@ -10,27 +10,13 @@ import {
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import ChatBox from "../components/agent/ChatBox";
-import ReactMarkdown from "react-markdown";
-import {
-  FileText,
-  AlertTriangle,
-  DotIcon,
-  CheckCircle,
-  ChevronDown,
-  ChevronRight,
-  Diff,
-} from "lucide-react";
+import { FileText } from "lucide-react";
 import axios from "axios";
-import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui.js";
-import "diff2html/bundles/css/diff2html.min.css";
-import { useRef } from "react";
-import { DiffViewer } from "../components/DiffView";
+import { DiffView } from "@hackathon/components/DiffView";
 
 export default function Page() {
-  const BASE_URL = "http://51.21.170.254:3000"; // Add your base URL here
+  const BASE_URL = "http://51.21.170.254:3000";
 
-  const ref = useRef;
-  // Configure axios defaults
   axios.defaults.headers.common["Access-Control-Allow-Origin"] = "*";
   axios.defaults.headers.common["Content-Type"] = "application/json";
 
@@ -42,62 +28,6 @@ export default function Page() {
   const [prs, setPRs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const markdown = `# Code Review: Express API Routes Modifications (PR 1)
-
----
-
-### 🟢 Positive Observations
-- Consistent JSON response structure  
-- Simple and clear route implementations  
-- Added more data points to enhance example datasets  
-
----
-
-### 🔶 Potential Improvements
-
-#### **Data Management**
-- Consider moving hardcoded data to:
-  - Separate JSON files  
-  - Database configuration  
-  - Environment variables  
-
-#### **Error Handling**
-- Implement error handling middleware  
-- Add status code validation  
-- Consider pagination for larger datasets  
-
-#### **Performance**
-- For production, replace static data with database queries  
-- Implement caching mechanisms for repeated requests  
-
----
-
-### 🚨 Recommendations
-1. Create a separate data layer/service  
-2. Add input validation middleware  
-3. Implement proper error handling  
-4. Use environment configuration for scalability  
-5. Consider adding request logging  
-
----
-
-### 💡 Code Style Notes
-- Maintain consistent array length  
-- Add comments explaining route purposes  
-- Consider using TypeScript for type safety  
-
----
-
-### 🔍 Security Considerations
-- Sanitize user inputs  
-- Implement authentication for sensitive routes  
-- Use HTTPS for data transmission  
-
----
-
-### ✅ Overall Rating: Good Starting Point
-`;
-
   useEffect(() => {
     const fetchPRs = async () => {
       try {
@@ -108,23 +38,16 @@ export default function Page() {
           {
             id: 1,
             title: "Fix authentication bug",
-            number: 123,
-            author: "john-doe",
-            status: "open",
+            state: "open",
+            user: "john-doe",
+            created_at: "2025-01-01T00:00:00Z",
           },
           {
             id: 2,
             title: "Add user validation",
-            number: 124,
-            author: "jane-smith",
-            status: "merged",
-          },
-          {
-            id: 3,
-            title: "Update API endpoints",
-            number: 125,
-            author: "dev-team",
-            status: "open",
+            state: "merged",
+            user: "jane-smith",
+            created_at: "2025-01-02T00:00:00Z",
           },
         ]);
       } finally {
@@ -151,34 +74,18 @@ export default function Page() {
     ],
   };
 
-  useEffect(() => {
-    if (ref.current && diff) {
-      const ui = new Diff2HtmlUI(ref.current, diff, {
-        drawFileList: true,
-        matching: "lines",
-        outputFormat: "line-by-line",
-      });
-
-      ui.draw();
-      ui.highlightCode();
-    }
-  }, [diff]);
-
   const handleAnalyze = async () => {
     if (!selectedPR) return;
     setIsAnalyzing(true);
 
     try {
-      const [reviewResponse, diffResponse] = await Promise.all([
-        axios.get(`${BASE_URL}/generate-review/${selectedPR.id}`),
-        axios.get(`${BASE_URL}/diff/${selectedPR.id}`),
-      ]);
+      const reviewResponse = await axios.get(
+        `${BASE_URL}/generate-review/${selectedPR.id}`
+      );
       setFeedback(reviewResponse.data);
-      setDiff(diffResponse.data);
       // setReviewResults(mockReviewData);
     } catch (error) {
-      setFeedback(markdown);
-      setDiff(null);
+      setFeedback("<h1>Error loading review</h1>");
       setReviewResults(mockReviewData);
     } finally {
       setIsAnalyzing(false);
@@ -206,7 +113,18 @@ export default function Page() {
             prs.map((pr) => (
               <Card
                 key={pr.id}
-                onClick={() => setSelectedPR(pr)}
+                onClick={async () => {
+                  setSelectedPR(pr);
+                  setFeedback(null);
+                  try {
+                    const diffResponse = await axios.get(
+                      `${BASE_URL}/diff/${pr.id}`
+                    );
+                    setDiff(diffResponse.data);
+                  } catch (error) {
+                    setDiff(null);
+                  }
+                }}
                 className={`mb-2 cursor-pointer transition-colors ${
                   selectedPR?.id === pr.id
                     ? "bg-blue-50 border-blue-200"
@@ -235,9 +153,20 @@ export default function Page() {
           )}
         </div>
 
-        {/* Feedback & Diff Center */}
+        {/* Diff & Feedback Center */}
         <div className="flex-1 p-6 flex flex-col gap-4">
-          {feedback ? (
+          {diff && (
+            <Card className="flex-1">
+              <CardHeader>
+                <CardTitle className="text-lg">File Changes</CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-y-auto">
+                <DiffView diff={diff} />
+              </CardContent>
+            </Card>
+          )}
+
+          {feedback && (
             <Card className="flex-1">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -245,68 +174,35 @@ export default function Page() {
                   Feedback
                 </CardTitle>
               </CardHeader>
-              <CardContent className="overflow-y-auto max-h-96">
-                <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="flex items-center gap-2 text-lg font-bold mb-3">
-                          <FileText className="w-4 h-4" />
-                          {children}
-                        </h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="flex items-center gap-2 text-md font-semibold mb-2 mt-4">
-                          <CheckCircle className="w-4 h-4" />
-                          {children}
-                        </h2>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="list-none space-y-1 mb-3">{children}</ul>
-                      ),
-                      li: ({ children }) => (
-                        <li className="flex items-start gap-2">
-                          <DotIcon className="w-5 h-5 mt-1 text-black flex-shrink-0" />
-                          <span className="text-sm">{children}</span>
-                        </li>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="space-y-1 mb-3">{children}</ol>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-semibold text-gray-900">
-                          {children}
-                        </strong>
-                      ),
-                      code: ({ children }) => (
-                        <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono">
-                          {children}
-                        </code>
-                      ),
-                    }}
-                  >
-                    {feedback}
-                  </ReactMarkdown>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="flex-1">
-              <CardContent className="flex items-center justify-center h-full">
-                <p className="text-gray-500">
-                  Select a PR and run analysis to see feedback
-                </p>
+              <CardContent className="overflow-y-auto">
+                <div
+                  dangerouslySetInnerHTML={{ __html: feedback }}
+                  style={{
+                    backgroundColor: "#fff",
+                    padding: "1.5rem",
+                    borderRadius: "8px",
+                    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+                  }}
+                />
               </CardContent>
             </Card>
           )}
 
-          {diff && <DiffViewer diff={diff} className="flex-1" />}
+          {!selectedPR && (
+            <Card className="h-full">
+              <CardContent className="flex items-center justify-center h-full">
+                <p className="text-gray-500">
+                  Select a PR to view diff and analysis
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Review Results & Chat */}
         <div className="w-96 p-6 flex flex-col gap-4 overflow-y-auto">
           <div className="flex-shrink-0">
-            {reviewResults ? (
+            {reviewResults && (
               <Card>
                 <CardHeader>
                   <CardTitle>Review Results</CardTitle>
@@ -346,12 +242,6 @@ export default function Page() {
                       </Card>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="flex items-center justify-center py-8">
-                  <p className="text-gray-500">Run analysis to see results</p>
                 </CardContent>
               </Card>
             )}

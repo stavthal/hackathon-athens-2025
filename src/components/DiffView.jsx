@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui";
 import "diff2html/bundles/css/diff2html.min.css";
 
-export function DiffViewer({ diff }) {
+export function DiffView({ diff }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
