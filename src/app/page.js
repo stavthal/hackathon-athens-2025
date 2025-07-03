@@ -17,7 +17,7 @@ import { AppProvider, useAppContext } from "../contexts/AppContext";
 
 function MainContent() {
   const { isPRListCollapsed, togglePRList, collapsePRList } = useAppContext();
-  
+
   const BASE_URL = "http://51.21.170.254:3000";
 
   axios.defaults.headers.common["Access-Control-Allow-Origin"] = "*";
@@ -82,7 +82,7 @@ function MainContent() {
     if (!selectedPR) return;
     setIsAnalyzing(true);
     setShowSpinner(true);
-    
+
     // Collapse the PR list when analysis starts
     collapsePRList();
 

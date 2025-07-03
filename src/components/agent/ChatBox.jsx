@@ -156,20 +156,20 @@ export default function ChatBox({ user_input }) {
       <Card className="flex flex-col h-[770px] shadow-lg">
         {/* Header with Load Context and Clear Button */}
         <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-semibold text-gray-700">AI Assistant</h3>
+          <h3 className="text-sm font-semibold text-gray-700">PR Assistant</h3>
           <div className="flex gap-2">
             {!contextLoaded && user_input && (
               <Button
                 onClick={loadContext}
                 variant="outline"
-                size="sm"
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                size="xs"
+                className="px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
               >
                 Load Context
               </Button>
             )}
             {contextLoaded && (
-              <span className="text-sm text-green-600 font-medium px-2 py-1 bg-green-50 rounded">
+              <span className="text-xs text-green-600 font-medium px-2 py-1 bg-green-50 rounded">
                 Context Loaded
               </span>
             )}
@@ -177,11 +177,10 @@ export default function ChatBox({ user_input }) {
               <Button
                 onClick={clearConversation}
                 variant="outline"
-                size="sm"
+                size="xs"
                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
-                <LucideTrash2 className="w-4 h-4 mr-2" />
-                Clear Chat
+                <LucideTrash2 className="w-4 h-4 mx-2" />
               </Button>
             )}
           </div>
