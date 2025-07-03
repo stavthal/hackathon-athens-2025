@@ -156,10 +156,7 @@ export default function Page() {
         {/* Diff & Feedback Center */}
         <div className="flex-1 p-6 flex flex-col gap-4">
           {diff && (
-            <Card className="flex-1">
-              <CardHeader>
-                <CardTitle className="text-lg">File Changes</CardTitle>
-              </CardHeader>
+            <Card className="flex-1 pt-3">
               <CardContent className="overflow-y-auto">
                 <DiffView diff={diff} />
               </CardContent>
@@ -168,12 +165,6 @@ export default function Page() {
 
           {feedback && (
             <Card className="flex-1">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Feedback
-                </CardTitle>
-              </CardHeader>
               <CardContent className="overflow-y-auto p-0">
                 <div
                   className="prose prose-sm max-w-none p-6 bg-white"
