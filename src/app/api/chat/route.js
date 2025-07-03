@@ -14,7 +14,7 @@ const client = new BedrockRuntimeClient({
 
 export async function POST(request) {
   try {
-    const { message } = await request.json();
+    const { message, conversationHistory = [] } = await request.json();
 
     if (!message) {
       return NextResponse.json(
@@ -23,7 +23,39 @@ export async function POST(request) {
       );
     }
 
-    // Using Claude 3.5 Haiku
+    // Validate conversation history format
+    const validHistory = Array.isArray(conversationHistory)
+      ? conversationHistory.filter(
+          (msg) =>
+            msg &&
+            typeof msg === "object" &&
+            msg.role &&
+            msg.content &&
+            (msg.role === "user" || msg.role === "assistant")
+        )
+      : [];
+
+    // Build the complete conversation history for Claude
+    // Include previous messages and the new user message
+    const messages = [
+      ...validHistory,
+      {
+        role: "user",
+        content: message,
+      },
+    ];
+
+    // Limit conversation history to prevent token limit issues
+    // Keep last 20 messages (10 exchanges) for context
+    const maxMessages = 20;
+    const recentMessages =
+      messages.length > maxMessages ? messages.slice(-maxMessages) : messages;
+
+    console.log(
+      `Sending ${recentMessages.length} messages to Claude for context`
+    );
+
+    // Using Claude 3.5 Haiku with conversation context
     const input = {
       modelId: "anthropic.claude-3-5-haiku-20241022-v1:0",
       contentType: "application/json",
@@ -31,12 +63,9 @@ export async function POST(request) {
       body: JSON.stringify({
         anthropic_version: "bedrock-2023-05-31",
         max_tokens: 1000,
-        messages: [
-          {
-            role: "user",
-            content: message,
-          },
-        ],
+        messages: recentMessages,
+        system:
+          "You are a helpful AI assistant. You have access to the conversation history and can reference previous messages to provide contextual responses. Be conversational and remember what the user has told you in this session.",
       }),
     };
 

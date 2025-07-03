@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { LucideArrowUp, LucideBot, LucideUser } from "lucide-react";
+import {
+  LucideArrowUp,
+  LucideBot,
+  LucideUser,
+  LucideTrash2,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import ReactMarkdown from "react-markdown";
@@ -12,6 +17,26 @@ export default function ChatBox() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Load conversation from localStorage on component mount
+  useEffect(() => {
+    const savedConversation = localStorage.getItem("chatConversation");
+    if (savedConversation) {
+      try {
+        const parsedMessages = JSON.parse(savedConversation);
+        setMessages(parsedMessages);
+      } catch (error) {
+        console.error("Error loading saved conversation:", error);
+      }
+    }
+  }, []);
+
+  // Save conversation to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("chatConversation", JSON.stringify(messages));
+    }
+  }, [messages]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -20,22 +45,35 @@ export default function ChatBox() {
     scrollToBottom();
   }, [messages]);
 
+  // Function to clear conversation history
+  const clearConversation = () => {
+    setMessages([]);
+    localStorage.removeItem("chatConversation");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+
+    // Add user message to local state immediately
+    const newUserMessage = { role: "user", content: userMessage };
+    setMessages((prev) => [...prev, newUserMessage]);
     setIsLoading(true);
 
     try {
+      // Send current conversation history along with the new message
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({
+          message: userMessage,
+          conversationHistory: messages, // Send the conversation history
+        }),
       });
 
       if (!response.ok) {
@@ -70,6 +108,22 @@ export default function ChatBox() {
 
   return (
     <div className="flex flex-col border rounded-lg shadow-md bg-white border-neutral-800 w-3/5 max-w-4xl mx-auto my-4 h-[800px]">
+      {/* Header with Clear Button */}
+      {messages.length > 0 && (
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="text-lg font-semibold text-gray-700">AI Assistant</h3>
+          <Button
+            onClick={clearConversation}
+            variant="outline"
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <LucideTrash2 className="w-4 h-4 mr-2" />
+            Clear Chat
+          </Button>
+        </div>
+      )}
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
