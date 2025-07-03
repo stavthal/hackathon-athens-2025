@@ -51,9 +51,10 @@ export default function ChatBox({ user_input }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Auto-scroll disabled - users can manually scroll to see new messages
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [messages]);
 
   // Function to clear conversation history
   const clearConversation = () => {
