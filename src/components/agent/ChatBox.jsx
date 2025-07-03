@@ -151,7 +151,7 @@ export default function ChatBox({ user_input }) {
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full mt-[-14px]">
       <Card className="flex flex-col h-[770px] shadow-lg">
         {/* Header with Load Context and Clear Button */}
         <div className="flex justify-between items-center p-4 border-b">
