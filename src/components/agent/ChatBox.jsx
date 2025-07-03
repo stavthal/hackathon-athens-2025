@@ -190,18 +190,59 @@ export default function ChatBox({ user_input }) {
         {messages.length === 0 && (
           <div className="text-center text-gray-500 mt-8">
             <LucideBot className="mx-auto mb-2 w-8 h-8" />
-            <p>Start a conversation with the AI agent!</p>
+            <p className="mb-4">Start a conversation with the AI agent!</p>
             {user_input && !contextLoaded && (
-              <p className="text-sm mt-2 text-blue-600">
+              <p className="text-sm mt-2 mb-4 text-blue-600">
                 Click "Load Context" to include your document in the
                 conversation.
               </p>
             )}
             {contextLoaded && (
-              <p className="text-sm mt-2 text-green-600">
+              <p className="text-sm mt-2 mb-4 text-green-600">
                 Context document loaded and ready for reference.
               </p>
             )}
+
+            {/* Predefined Code Review Questions */}
+            <div className="max-w-2xl mx-auto mt-6">
+              <p className="text-sm text-gray-600 mb-4 font-medium">
+                Common code review questions:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[
+                  "What are the main changes in this PR?",
+                  "Are there any potential security vulnerabilities?",
+                  "Does this code follow best practices?",
+                  "Are there any performance concerns?",
+                  "What tests should be added for these changes?",
+                  "Are there any breaking changes?",
+                  "Is the error handling adequate?",
+                  "Could this code be simplified or refactored?",
+                ].map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setInputMessage(question);
+                      // Trigger form submission immediately
+                      setTimeout(() => {
+                        const form = document.querySelector("form");
+                        if (form) {
+                          const submitEvent = new Event("submit", {
+                            bubbles: true,
+                            cancelable: true,
+                          });
+                          form.dispatchEvent(submitEvent);
+                        }
+                      }, 0);
+                    }}
+                    disabled={isLoading}
+                    className="text-left p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-700 transition-colors hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
