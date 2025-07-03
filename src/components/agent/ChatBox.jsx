@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { Card } from "../ui/card";
+
 import ReactMarkdown from "react-markdown";
 
 export default function ChatBox({ user_input }) {
@@ -149,7 +151,7 @@ export default function ChatBox({ user_input }) {
   };
 
   return (
-    <div className="flex flex-col border rounded-lg shadow-md bg-white border-neutral-800 w-3/5 max-w-4xl mx-auto my-4 h-[800px]">
+    <Card className="flex flex-col h-full">
       {/* Header with Load Context and Clear Button */}
       <div className="flex justify-between items-center p-4 border-b">
         <h3 className="text-lg font-semibold text-gray-700">AI Assistant</h3>
@@ -348,6 +350,6 @@ export default function ChatBox({ user_input }) {
           </Button>
         </div>
       </form>
-    </div>
+    </Card>
   );
 }
