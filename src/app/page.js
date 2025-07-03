@@ -247,8 +247,8 @@ export default function Page() {
             )}
           </div>
 
-          <div className="h-80 flex-shrink-0">
-            <ChatBox />
+          <div>
+            <ChatBox user_input={feedback} />
           </div>
         </div>
       </div>
