@@ -10,7 +10,7 @@ import {
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import ChatBox from "../components/agent/ChatBox";
-import { FileText } from "lucide-react";
+import { FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 import { DiffView } from "@hackathon/components/DiffView";
 
@@ -27,6 +27,7 @@ export default function Page() {
   const [diff, setDiff] = useState(null);
   const [prs, setPRs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isPRListCollapsed, setIsPRListCollapsed] = useState(false);
 
   useEffect(() => {
     const fetchPRs = async () => {
@@ -105,52 +106,92 @@ export default function Page() {
 
       <div className="flex h-[calc(100vh-80px)]">
         {/* PR List */}
-        <div className="w-80 bg-white border-r p-4 overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-4">Pull Requests</h2>
-          {loading ? (
-            <div className="text-center py-4 text-gray-500">Loading PRs...</div>
-          ) : (
-            prs.map((pr) => (
-              <Card
-                key={pr.id}
-                onClick={async () => {
-                  setSelectedPR(pr);
-                  setFeedback(null);
-                  try {
-                    const diffResponse = await axios.get(
-                      `${BASE_URL}/diff/${pr.id}`
-                    );
-                    setDiff(diffResponse.data);
-                  } catch (error) {
-                    setDiff(null);
-                  }
-                }}
-                className={`mb-2 cursor-pointer transition-colors ${
-                  selectedPR?.id === pr.id
-                    ? "bg-blue-50 border-blue-200"
-                    : "hover:bg-gray-50"
-                }`}
+        <div
+          className={`${
+            isPRListCollapsed ? "w-12" : "w-80"
+          } bg-white border-r transition-all duration-300 ease-in-out overflow-hidden`}
+        >
+          <div className="p-4 h-full overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              {!isPRListCollapsed && (
+                <h2 className="text-lg font-semibold">Pull Requests</h2>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsPRListCollapsed(!isPRListCollapsed)}
+                className="ml-auto p-1 h-8 w-8"
+                title={
+                  isPRListCollapsed ? "Expand PR list" : "Collapse PR list"
+                }
               >
-                <CardContent className="p-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-medium text-sm">{pr.title}</span>
-                    <Badge
-                      variant={pr.state === "merged" ? "default" : "secondary"}
+                {isPRListCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            {!isPRListCollapsed && (
+              <>
+                {loading ? (
+                  <div className="text-center py-4 text-gray-500">
+                    Loading PRs...
+                  </div>
+                ) : (
+                  prs.map((pr) => (
+                    <Card
+                      key={pr.id}
+                      onClick={async () => {
+                        setSelectedPR(pr);
+                        setFeedback(null);
+                        try {
+                          const diffResponse = await axios.get(
+                            `${BASE_URL}/diff/${pr.id}`
+                          );
+                          setDiff(diffResponse.data);
+                        } catch (error) {
+                          setDiff(null);
+                        }
+                      }}
+                      className={`mb-2 cursor-pointer transition-colors ${
+                        selectedPR?.id === pr.id
+                          ? "bg-blue-50 border-blue-200"
+                          : "hover:bg-gray-50"
+                      }`}
                     >
-                      {pr.state}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs text-gray-500">#{pr.id}</span>
-                    <span className="text-xs text-gray-500">{pr.user}</span>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {new Date(pr.created_at).toLocaleDateString()}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                      <CardContent className="p-3">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="font-medium text-sm">
+                            {pr.title}
+                          </span>
+                          <Badge
+                            variant={
+                              pr.state === "merged" ? "default" : "secondary"
+                            }
+                          >
+                            {pr.state}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs text-gray-500">
+                            #{pr.id}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {pr.user}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {new Date(pr.created_at).toLocaleDateString()}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Diff & Feedback Center */}
