@@ -10,11 +10,14 @@ import {
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import ChatBox from "../components/agent/ChatBox";
-import { FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import axios from "axios";
 import { DiffView } from "@hackathon/components/DiffView";
+import { AppProvider, useAppContext } from "../contexts/AppContext";
 
-export default function Page() {
+function MainContent() {
+  const { isPRListCollapsed, togglePRList, collapsePRList } = useAppContext();
+  
   const BASE_URL = "http://51.21.170.254:3000";
 
   axios.defaults.headers.common["Access-Control-Allow-Origin"] = "*";
@@ -27,7 +30,7 @@ export default function Page() {
   const [diff, setDiff] = useState(null);
   const [prs, setPRs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isPRListCollapsed, setIsPRListCollapsed] = useState(false);
+  const [showSpinner, setShowSpinner] = useState(false);
 
   useEffect(() => {
     const fetchPRs = async () => {
@@ -78,6 +81,10 @@ export default function Page() {
   const handleAnalyze = async () => {
     if (!selectedPR) return;
     setIsAnalyzing(true);
+    setShowSpinner(true);
+    
+    // Collapse the PR list when analysis starts
+    collapsePRList();
 
     try {
       const reviewResponse = await axios.get(
@@ -90,6 +97,7 @@ export default function Page() {
       setReviewResults(mockReviewData);
     } finally {
       setIsAnalyzing(false);
+      setShowSpinner(false);
     }
   };
 
@@ -119,7 +127,7 @@ export default function Page() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsPRListCollapsed(!isPRListCollapsed)}
+                onClick={() => togglePRList()}
                 className="ml-auto p-1 h-8 w-8"
                 title={
                   isPRListCollapsed ? "Expand PR list" : "Collapse PR list"
@@ -204,7 +212,18 @@ export default function Page() {
             </Card>
           )}
 
-          {feedback && (
+          {showSpinner && (
+            <Card className="flex-1">
+              <CardContent className="flex items-center justify-center h-full">
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <p className="text-gray-500">Analyzing code...</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {!showSpinner && feedback && (
             <Card className="flex-1">
               <CardContent className="overflow-y-auto p-0">
                 <div
@@ -215,7 +234,7 @@ export default function Page() {
             </Card>
           )}
 
-          {!selectedPR && (
+          {!showSpinner && !selectedPR && (
             <Card className="h-full">
               <CardContent className="flex items-center justify-center h-full">
                 <p className="text-gray-500">
@@ -280,5 +299,13 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <AppProvider>
+      <MainContent />
+    </AppProvider>
   );
 }
