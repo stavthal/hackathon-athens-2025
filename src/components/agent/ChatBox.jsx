@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { LucideArrowUp, LucideBot, LucideUser } from "lucide-react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import ReactMarkdown from "react-markdown";
 
 export default function ChatBox() {
   const [messages, setMessages] = useState([]);
@@ -68,7 +69,7 @@ export default function ChatBox() {
   };
 
   return (
-    <div className="flex flex-col border rounded-lg shadow-md bg-white border-neutral-800 w-4/5 max-w-4xl mx-auto my-4 h-96">
+    <div className="flex flex-col border rounded-lg shadow-md bg-white border-neutral-800 w-3/5 max-w-4xl mx-auto my-4 h-[800px]">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
@@ -86,8 +87,10 @@ export default function ChatBox() {
             }`}
           >
             <div
-              className={`flex gap-2 max-w-xs lg:max-w-md ${
-                message.role === "user" ? "flex-row-reverse" : "flex-row"
+              className={`flex gap-2 ${
+                message.role === "user"
+                  ? "flex-row-reverse max-w-xs lg:max-w-md"
+                  : "flex-row max-w-[150px] lg:max-w-[250px]"
               }`}
             >
               <div className="flex-shrink-0">
@@ -104,7 +107,72 @@ export default function ChatBox() {
                     : "bg-gray-100 text-gray-900"
                 }`}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                {message.role === "user" ? (
+                  <p className="text-sm whitespace-pre-wrap">
+                    {message.content}
+                  </p>
+                ) : (
+                  <div className="text-sm prose prose-sm">
+                    <ReactMarkdown
+                      components={{
+                        // Custom styling for markdown elements
+                        p: ({ children }) => (
+                          <p className="mb-2 last:mb-0">{children}</p>
+                        ),
+                        h1: ({ children }) => (
+                          <h1 className="text-lg font-bold mb-2">{children}</h1>
+                        ),
+                        h2: ({ children }) => (
+                          <h2 className="text-md font-bold mb-2">{children}</h2>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className="text-sm font-bold mb-1">{children}</h3>
+                        ),
+                        code: ({ children, inline }) =>
+                          inline ? (
+                            <code className="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">
+                              {children}
+                            </code>
+                          ) : (
+                            <code className="block bg-gray-200 p-2 rounded text-xs font-mono overflow-x-auto">
+                              {children}
+                            </code>
+                          ),
+                        pre: ({ children }) => (
+                          <pre className="bg-gray-200 p-2 rounded text-xs font-mono overflow-x-auto mb-2">
+                            {children}
+                          </pre>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="list-disc list-inside mb-2">
+                            {children}
+                          </ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="list-decimal list-inside mb-2">
+                            {children}
+                          </ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="mb-1">{children}</li>
+                        ),
+                        blockquote: ({ children }) => (
+                          <blockquote className="border-l-4 border-gray-300 pl-4 italic mb-2">
+                            {children}
+                          </blockquote>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-bold">{children}</strong>
+                        ),
+                        em: ({ children }) => (
+                          <em className="italic">{children}</em>
+                        ),
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             </div>
           </div>
