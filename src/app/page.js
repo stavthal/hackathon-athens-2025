@@ -174,15 +174,10 @@ export default function Page() {
                   Feedback
                 </CardTitle>
               </CardHeader>
-              <CardContent className="overflow-y-auto">
+              <CardContent className="overflow-y-auto p-0">
                 <div
+                  className="prose prose-sm max-w-none p-6 bg-white"
                   dangerouslySetInnerHTML={{ __html: feedback }}
-                  style={{
-                    backgroundColor: "#fff",
-                    padding: "1.5rem",
-                    borderRadius: "8px",
-                    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
-                  }}
                 />
               </CardContent>
             </Card>
