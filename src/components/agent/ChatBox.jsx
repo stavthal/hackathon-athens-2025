@@ -151,246 +151,254 @@ export default function ChatBox({ user_input }) {
   };
 
   return (
-    <Card className="flex flex-col h-full">
-      {/* Header with Load Context and Clear Button */}
-      <div className="flex justify-between items-center p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-700">AI Assistant</h3>
-        <div className="flex gap-2">
-          {!contextLoaded && user_input && (
-            <Button
-              onClick={loadContext}
-              variant="outline"
-              size="sm"
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-            >
-              Load Context
-            </Button>
-          )}
-          {contextLoaded && (
-            <span className="text-sm text-green-600 font-medium px-2 py-1 bg-green-50 rounded">
-              Context Loaded
-            </span>
-          )}
-          {messages.length > 0 && (
-            <Button
-              onClick={clearConversation}
-              variant="outline"
-              size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <LucideTrash2 className="w-4 h-4 mr-2" />
-              Clear Chat
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-8">
-            <LucideBot className="mx-auto mb-2 w-8 h-8" />
-            <p className="mb-4">Start a conversation with the AI agent!</p>
-            {user_input && !contextLoaded && (
-              <p className="text-sm mt-2 mb-4 text-blue-600">
-                Click "Load Context" to include your document in the
-                conversation.
-              </p>
+    <div className="h-full w-full">
+      <Card className="flex flex-col h-[770px] shadow-lg">
+        {/* Header with Load Context and Clear Button */}
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="text-lg font-semibold text-gray-700">AI Assistant</h3>
+          <div className="flex gap-2">
+            {!contextLoaded && user_input && (
+              <Button
+                onClick={loadContext}
+                variant="outline"
+                size="sm"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              >
+                Load Context
+              </Button>
             )}
             {contextLoaded && (
-              <p className="text-sm mt-2 mb-4 text-green-600">
-                Context document loaded and ready for reference.
-              </p>
+              <span className="text-sm text-green-600 font-medium px-2 py-1 bg-green-50 rounded">
+                Context Loaded
+              </span>
             )}
-
-            {/* Predefined Code Review Questions */}
-            <div className="max-w-2xl mx-auto mt-6">
-              <p className="text-sm text-gray-600 mb-4 font-medium">
-                Common code review questions:
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {[
-                  "What are the main changes in this PR?",
-                  "Are there any potential security vulnerabilities?",
-                  "Does this code follow best practices?",
-                  "Are there any performance concerns?",
-                  "What tests should be added for these changes?",
-                  "Are there any breaking changes?",
-                  "Is the error handling adequate?",
-                  "Could this code be simplified or refactored?",
-                ].map((question, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setInputMessage(question);
-                      // Trigger form submission immediately
-                      setTimeout(() => {
-                        const form = document.querySelector("form");
-                        if (form) {
-                          const submitEvent = new Event("submit", {
-                            bubbles: true,
-                            cancelable: true,
-                          });
-                          form.dispatchEvent(submitEvent);
-                        }
-                      }, 0);
-                    }}
-                    disabled={isLoading}
-                    className="text-left p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-700 transition-colors hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {question}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`flex gap-3 ${
-              message.role === "user" ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div
-              className={`flex gap-2 ${
-                message.role === "user"
-                  ? "flex-row-reverse max-w-xs lg:max-w-md"
-                  : "flex-row max-w-[150px] lg:max-w-[250px]"
-              }`}
-            >
-              <div className="flex-shrink-0">
-                {message.role === "user" ? (
-                  <LucideUser className="w-6 h-6 text-neutral-600" />
-                ) : (
-                  <LucideBot className="w-6 h-6 text-green-600" />
-                )}
-              </div>
-              <div
-                className={`px-4 py-2 rounded-lg ${
-                  message.role === "user"
-                    ? "bg-neutral-600 text-white"
-                    : "bg-gray-100 text-gray-900"
-                }`}
+            {messages.length > 0 && (
+              <Button
+                onClick={clearConversation}
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
-                {message.role === "user" ? (
-                  <p className="text-sm whitespace-pre-wrap">
-                    {message.content}
-                  </p>
-                ) : (
-                  <div className="text-sm prose prose-sm">
-                    <ReactMarkdown
-                      components={{
-                        // Custom styling for markdown elements
-                        p: ({ children }) => (
-                          <p className="mb-2 last:mb-0">{children}</p>
-                        ),
-                        h1: ({ children }) => (
-                          <h1 className="text-lg font-bold mb-2">{children}</h1>
-                        ),
-                        h2: ({ children }) => (
-                          <h2 className="text-md font-bold mb-2">{children}</h2>
-                        ),
-                        h3: ({ children }) => (
-                          <h3 className="text-sm font-bold mb-1">{children}</h3>
-                        ),
-                        code: ({ children, inline }) =>
-                          inline ? (
-                            <code className="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">
-                              {children}
-                            </code>
-                          ) : (
-                            <code className="block bg-gray-200 p-2 rounded text-xs font-mono overflow-x-auto">
-                              {children}
-                            </code>
-                          ),
-                        pre: ({ children }) => (
-                          <pre className="bg-gray-200 p-2 rounded text-xs font-mono overflow-x-auto mb-2">
-                            {children}
-                          </pre>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="list-disc list-inside mb-2">
-                            {children}
-                          </ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="list-decimal list-inside mb-2">
-                            {children}
-                          </ol>
-                        ),
-                        li: ({ children }) => (
-                          <li className="mb-1">{children}</li>
-                        ),
-                        blockquote: ({ children }) => (
-                          <blockquote className="border-l-4 border-gray-300 pl-4 italic mb-2">
-                            {children}
-                          </blockquote>
-                        ),
-                        strong: ({ children }) => (
-                          <strong className="font-bold">{children}</strong>
-                        ),
-                        em: ({ children }) => (
-                          <em className="italic">{children}</em>
-                        ),
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
-                  </div>
-                )}
-              </div>
-            </div>
+                <LucideTrash2 className="w-4 h-4 mr-2" />
+                Clear Chat
+              </Button>
+            )}
           </div>
-        ))}
+        </div>
 
-        {isLoading && (
-          <div className="flex gap-3 justify-start">
-            <div className="flex gap-2 max-w-xs lg:max-w-md">
-              <div className="flex-shrink-0">
-                <LucideBot className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="px-4 py-2 rounded-lg bg-gray-100 text-gray-900">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.length === 0 && (
+            <div className="text-center text-gray-500 mt-8">
+              <LucideBot className="mx-auto mb-2 w-8 h-8" />
+              <p className="mb-4">Start a conversation with the AI agent!</p>
+              {user_input && !contextLoaded && (
+                <p className="text-sm mt-2 mb-4 text-blue-600">
+                  Click "Load Context" to include your document in the
+                  conversation.
+                </p>
+              )}
+              {contextLoaded && (
+                <p className="text-sm mt-2 mb-4 text-green-600">
+                  Context document loaded and ready for reference.
+                </p>
+              )}
+
+              {/* Predefined Code Review Questions */}
+              <div className="max-w-2xl mx-auto mt-6">
+                <p className="text-sm text-gray-600 mb-4 font-medium">
+                  Common code review questions:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    "What are the main changes in this PR?",
+                    "Are there any potential security vulnerabilities?",
+                    "Does this code follow best practices?",
+                    "Are there any performance concerns?",
+                    "What tests should be added for these changes?",
+                    "Are there any breaking changes?",
+                    "Is the error handling adequate?",
+                    "Could this code be simplified or refactored?",
+                  ].map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setInputMessage(question);
+                        // Trigger form submission immediately
+                        setTimeout(() => {
+                          const form = document.querySelector("form");
+                          if (form) {
+                            const submitEvent = new Event("submit", {
+                              bubbles: true,
+                              cancelable: true,
+                            });
+                            form.dispatchEvent(submitEvent);
+                          }
+                        }, 0);
+                      }}
+                      disabled={isLoading}
+                      className="text-left p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-700 transition-colors hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {question}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div ref={messagesEndRef} />
-      </div>
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex gap-3 ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`flex gap-2 ${
+                  message.role === "user"
+                    ? "flex-row-reverse max-w-xs lg:max-w-md"
+                    : "flex-row max-w-[150px] lg:max-w-[250px]"
+                }`}
+              >
+                <div className="flex-shrink-0">
+                  {message.role === "user" ? (
+                    <LucideUser className="w-6 h-6 text-neutral-600" />
+                  ) : (
+                    <LucideBot className="w-6 h-6 text-green-600" />
+                  )}
+                </div>
+                <div
+                  className={`px-4 py-2 rounded-lg ${
+                    message.role === "user"
+                      ? "bg-neutral-600 text-white"
+                      : "bg-gray-100 text-gray-900"
+                  }`}
+                >
+                  {message.role === "user" ? (
+                    <p className="text-sm whitespace-pre-wrap">
+                      {message.content}
+                    </p>
+                  ) : (
+                    <div className="text-sm prose prose-sm">
+                      <ReactMarkdown
+                        components={{
+                          // Custom styling for markdown elements
+                          p: ({ children }) => (
+                            <p className="mb-2 last:mb-0">{children}</p>
+                          ),
+                          h1: ({ children }) => (
+                            <h1 className="text-lg font-bold mb-2">
+                              {children}
+                            </h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-md font-bold mb-2">
+                              {children}
+                            </h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-sm font-bold mb-1">
+                              {children}
+                            </h3>
+                          ),
+                          code: ({ children, inline }) =>
+                            inline ? (
+                              <code className="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">
+                                {children}
+                              </code>
+                            ) : (
+                              <code className="block bg-gray-200 p-2 rounded text-xs font-mono overflow-x-auto">
+                                {children}
+                              </code>
+                            ),
+                          pre: ({ children }) => (
+                            <pre className="bg-gray-200 p-2 rounded text-xs font-mono overflow-x-auto mb-2">
+                              {children}
+                            </pre>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc list-inside mb-2">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal list-inside mb-2">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="mb-1">{children}</li>
+                          ),
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-4 border-gray-300 pl-4 italic mb-2">
+                              {children}
+                            </blockquote>
+                          ),
+                          strong: ({ children }) => (
+                            <strong className="font-bold">{children}</strong>
+                          ),
+                          em: ({ children }) => (
+                            <em className="italic">{children}</em>
+                          ),
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
 
-      {/* Input Area */}
-      <form onSubmit={handleSubmit} className="border-t p-4">
-        <div className="flex items-end gap-2">
-          <Textarea
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your message..."
-            className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:border-none text-lg min-h-[40px] max-h-[120px]"
-            disabled={isLoading}
-          />
-          <Button
-            type="submit"
-            disabled={!inputMessage.trim() || isLoading}
-            className="rounded-full hover:scale-110 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <LucideArrowUp className="text-white" />
-          </Button>
+          {isLoading && (
+            <div className="flex gap-3 justify-start">
+              <div className="flex gap-2 max-w-xs lg:max-w-md">
+                <div className="flex-shrink-0">
+                  <LucideBot className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="px-4 py-2 rounded-lg bg-gray-100 text-gray-900">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.1s" }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
         </div>
-      </form>
-    </Card>
+
+        {/* Input Area */}
+        <form onSubmit={handleSubmit} className="border-t p-4">
+          <div className="flex items-end gap-2">
+            <Textarea
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message..."
+              className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:border-none text-lg min-h-[40px] max-h-[120px]"
+              disabled={isLoading}
+            />
+            <Button
+              type="submit"
+              disabled={!inputMessage.trim() || isLoading}
+              className="rounded-full hover:scale-110 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <LucideArrowUp className="text-white" />
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
   );
 }
